@@ -47,7 +47,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/JWThewes/micropress-theme-sdk.git"
+    "url": "https://github.com/JWThewes/micropress-theme-sdk.git",
+    "directory": "sdk"
   },
   "homepage": "https://github.com/JWThewes/micropress-theme-sdk#readme",
   "bugs": {
