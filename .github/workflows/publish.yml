@@ -21,8 +21,6 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
-          cache-dependency-path: sdk/package-lock.json
 
       - name: Set version from release tag
         working-directory: sdk
