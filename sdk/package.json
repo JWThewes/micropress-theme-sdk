@@ -47,11 +47,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/micropress/theme-sdk.git"
+    "url": "https://github.com/JWThewes/micropress-theme-sdk.git"
   },
-  "homepage": "https://github.com/micropress/theme-sdk#readme",
+  "homepage": "https://github.com/JWThewes/micropress-theme-sdk#readme",
   "bugs": {
-    "url": "https://github.com/micropress/theme-sdk/issues"
+    "url": "https://github.com/JWThewes/micropress-theme-sdk/issues"
   },
   "engines": {
     "node": ">=18.0.0"
