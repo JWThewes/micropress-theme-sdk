@@ -21,6 +21,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Debug info
+        run: |
+          echo "Node version: $(node -v)"
+          echo "npm version: $(npm -v)"
+          echo "GitHub repo: $GITHUB_REPOSITORY"
+          echo "Workflow: $GITHUB_WORKFLOW"
+          echo "Environment: npm-publish"
+          cat ~/.npmrc || echo "No .npmrc found"
 
       - name: Set version from release tag
         working-directory: sdk
