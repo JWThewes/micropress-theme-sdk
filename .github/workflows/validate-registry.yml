@@ -1,0 +1,161 @@
+name: Validate Registry
+
+on:
+  pull_request:
+    paths:
+      - 'registry/**'
+      - '.github/workflows/validate-registry.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'registry/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate registry.json
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+
+          const registryPath = 'registry/registry.json';
+
+          // Check file exists
+          if (!fs.existsSync(registryPath)) {
+            console.error('registry.json not found');
+            process.exit(1);
+          }
+
+          // Parse JSON
+          let registry;
+          try {
+            const content = fs.readFileSync(registryPath, 'utf-8');
+            registry = JSON.parse(content);
+          } catch (error) {
+            console.error('Invalid JSON:', error.message);
+            process.exit(1);
+          }
+
+          // Validate structure
+          if (!registry.themes || !Array.isArray(registry.themes)) {
+            console.error('registry.json must have a "themes" array');
+            process.exit(1);
+          }
+
+          // Validate each theme entry
+          const requiredFields = ['id', 'name', 'description', 'latestVersion', 'author', 'githubRepo', 'releaseUrl'];
+          const errors = [];
+          const ids = new Set();
+
+          for (const theme of registry.themes) {
+            // Check required fields
+            for (const field of requiredFields) {
+              if (!theme[field]) {
+                errors.push(`Theme "${theme.id || 'unknown'}": missing required field "${field}"`);
+              }
+            }
+
+            // Check ID format
+            if (theme.id && !/^[a-z][a-z0-9-]*$/.test(theme.id)) {
+              errors.push(`Theme "${theme.id}": invalid ID format (must be lowercase letters, numbers, and hyphens)`);
+            }
+
+            // Check for duplicate IDs
+            if (theme.id) {
+              if (ids.has(theme.id)) {
+                errors.push(`Duplicate theme ID: "${theme.id}"`);
+              }
+              ids.add(theme.id);
+            }
+
+            // Check version format
+            if (theme.latestVersion && !/^\d+\.\d+\.\d+(-[a-z0-9.]+)?$/.test(theme.latestVersion)) {
+              errors.push(`Theme "${theme.id}": invalid version format "${theme.latestVersion}"`);
+            }
+
+            // Check GitHub repo format
+            if (theme.githubRepo && !/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/.test(theme.githubRepo)) {
+              errors.push(`Theme "${theme.id}": invalid githubRepo format "${theme.githubRepo}"`);
+            }
+
+            // Check URLs
+            if (theme.releaseUrl && !theme.releaseUrl.startsWith('https://')) {
+              errors.push(`Theme "${theme.id}": releaseUrl must be HTTPS`);
+            }
+            if (theme.previewUrl && !theme.previewUrl.startsWith('https://')) {
+              errors.push(`Theme "${theme.id}": previewUrl must be HTTPS`);
+            }
+          }
+
+          if (errors.length > 0) {
+            console.error('Validation errors:');
+            for (const error of errors) {
+              console.error(`  - ${error}`);
+            }
+            process.exit(1);
+          }
+
+          console.log(`✓ Registry valid: ${registry.themes.length} theme(s)`);
+          EOF
+
+      - name: Check theme availability
+        if: github.event_name == 'pull_request'
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          const https = require('https');
+
+          const registryPath = 'registry/registry.json';
+          const registry = JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
+
+          async function checkUrl(url) {
+            return new Promise((resolve) => {
+              https.get(url, { method: 'HEAD' }, (res) => {
+                resolve(res.statusCode >= 200 && res.statusCode < 400);
+              }).on('error', () => resolve(false));
+            });
+          }
+
+          async function main() {
+            const warnings = [];
+
+            for (const theme of registry.themes) {
+              // Check GitHub repo exists
+              const repoUrl = `https://github.com/${theme.githubRepo}`;
+              const repoExists = await checkUrl(repoUrl);
+              if (!repoExists) {
+                warnings.push(`Theme "${theme.id}": GitHub repo may not be accessible: ${repoUrl}`);
+              }
+
+              // Check release URL (optional)
+              if (theme.releaseUrl) {
+                const releaseExists = await checkUrl(theme.releaseUrl);
+                if (!releaseExists) {
+                  warnings.push(`Theme "${theme.id}": Release URL may not be accessible: ${theme.releaseUrl}`);
+                }
+              }
+            }
+
+            if (warnings.length > 0) {
+              console.log('Warnings (these may be false positives):');
+              for (const warning of warnings) {
+                console.log(`  ⚠ ${warning}`);
+              }
+            }
+
+            console.log('\n✓ Availability check complete');
+          }
+
+          main();
+          EOF
