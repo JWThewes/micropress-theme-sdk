@@ -90,12 +90,15 @@ gh release create v1.0.0 ./my-theme-1.0.0.zip \
       "latestVersion": "1.0.0",
       "author": "Your Name",
       "githubRepo": "your-username/my-theme",
-      "releaseUrl": "https://github.com/your-username/my-theme/releases/download/v1.0.0/my-theme-1.0.0.zip",
       "previewUrl": "https://your-demo-site.com"
     }
   ]
 }
 ```
+
+**Note**: The `releaseUrl` is automatically constructed from `githubRepo` and `latestVersion`. Make sure your GitHub release follows the naming convention:
+- Release tag: `v{version}` (e.g., `v1.0.0`)
+- Asset filename: `{id}-{version}.zip` (e.g., `my-theme-1.0.0.zip`)
 
 4. Submit a Pull Request
 
@@ -103,23 +106,22 @@ gh release create v1.0.0 ./my-theme-1.0.0.zip \
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `id` | Yes | Unique theme identifier |
+| `id` | Yes | Unique theme identifier (lowercase, hyphens only) |
 | `name` | Yes | Display name |
 | `description` | Yes | Brief description |
-| `latestVersion` | Yes | Current version |
+| `latestVersion` | Yes | Current version (semver format) |
 | `author` | Yes | Author name |
-| `githubRepo` | Yes | GitHub repo (owner/repo) |
-| `releaseUrl` | Yes | Direct download URL |
-| `previewUrl` | No | Demo site URL |
+| `githubRepo` | Yes | GitHub repo (owner/repo format) |
+| `previewUrl` | No | Demo site URL (optional) |
 
 ### Updating Your Theme
 
 When releasing a new version:
 
-1. Create a new GitHub release with the updated ZIP
-2. Submit a PR updating `registry.json` with:
-   - New `latestVersion`
-   - New `releaseUrl`
+1. Create a new GitHub release with the updated ZIP (following the naming convention above)
+2. Submit a PR updating `registry.json` with only the new `latestVersion`
+
+That's it! The `releaseUrl` will be automatically constructed from your `githubRepo` and new `latestVersion`.
 
 ## Best Practices
 

@@ -47,7 +47,6 @@ Open an issue describing:
   "latestVersion": "1.0.0",
   "author": "Your Name",
   "githubRepo": "username/repo",
-  "releaseUrl": "https://github.com/username/repo/releases/download/v1.0.0/theme.zip",
   "previewUrl": "https://optional-preview-site.com"
 }
 ```
@@ -58,11 +57,14 @@ Required fields:
 - `description` - Brief description
 - `latestVersion` - Semver format
 - `author` - Your name
-- `githubRepo` - GitHub repo path
-- `releaseUrl` - Direct download URL (HTTPS)
+- `githubRepo` - GitHub repo path (owner/repo format)
 
 Optional:
 - `previewUrl` - Demo site URL
+
+**Note**: The `releaseUrl` is automatically constructed from `githubRepo` and `latestVersion`. Ensure your GitHub release follows the naming convention:
+- Release tag: `v{version}` (e.g., `v1.0.0`)
+- Asset filename: `{id}-{version}.zip` (e.g., `your-theme-id-1.0.0.zip`)
 
 ## Development Setup
 
