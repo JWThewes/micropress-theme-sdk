@@ -226,6 +226,45 @@ dist/
 .DS_Store
 `;
 
+const GITHUB_RELEASE_WORKFLOW_TEMPLATE = `name: Release Theme
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate theme
+        run: npm run validate
+
+      - name: Build theme
+        run: npm run build
+
+      - name: Package theme
+        run: npm run package
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*.zip"
+          generate_release_notes: true
+`
+
 const GITHUB_WORKFLOW_TEMPLATE = `name: Build Theme
 
 on:
@@ -307,6 +346,7 @@ export async function initCommand(name: string, options: InitOptions): Promise<v
     { path: 'tsconfig.json', content: TSCONFIG_TEMPLATE },
     { path: '.gitignore', content: GITIGNORE_TEMPLATE },
     { path: '.github/workflows/build.yml', content: GITHUB_WORKFLOW_TEMPLATE },
+    { path: '.github/workflows/release.yml', content: GITHUB_RELEASE_WORKFLOW_TEMPLATE },
   ];
 
   for (const file of files) {
