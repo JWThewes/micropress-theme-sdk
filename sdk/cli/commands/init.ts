@@ -205,8 +205,8 @@ const PACKAGE_JSON_TEMPLATE = `{
 const TSCONFIG_TEMPLATE = `{
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "declaration": true,
     "declarationMap": true,
     "outDir": "dist",
