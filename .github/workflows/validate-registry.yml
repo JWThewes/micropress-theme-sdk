@@ -54,7 +54,7 @@ jobs:
           }
 
           // Validate each theme entry
-          const requiredFields = ['id', 'name', 'description', 'latestVersion', 'author', 'githubRepo', 'releaseUrl'];
+          const requiredFields = ['id', 'name', 'description', 'latestVersion', 'author', 'githubRepo'];
           const errors = [];
           const ids = new Set();
 
@@ -89,12 +89,14 @@ jobs:
               errors.push(`Theme "${theme.id}": invalid githubRepo format "${theme.githubRepo}"`);
             }
 
-            // Check URLs
-            if (theme.releaseUrl && !theme.releaseUrl.startsWith('https://')) {
-              errors.push(`Theme "${theme.id}": releaseUrl must be HTTPS`);
-            }
+            // Check optional URLs
             if (theme.previewUrl && !theme.previewUrl.startsWith('https://')) {
               errors.push(`Theme "${theme.id}": previewUrl must be HTTPS`);
+            }
+
+            // Warn if releaseUrl is present (it should be dynamically constructed now)
+            if (theme.releaseUrl) {
+              errors.push(`Theme "${theme.id}": releaseUrl should not be in registry (it's dynamically constructed from githubRepo and latestVersion)`);
             }
           }
 
@@ -138,12 +140,11 @@ jobs:
                 warnings.push(`Theme "${theme.id}": GitHub repo may not be accessible: ${repoUrl}`);
               }
 
-              // Check release URL (optional)
-              if (theme.releaseUrl) {
-                const releaseExists = await checkUrl(theme.releaseUrl);
-                if (!releaseExists) {
-                  warnings.push(`Theme "${theme.id}": Release URL may not be accessible: ${theme.releaseUrl}`);
-                }
+              // Check dynamically constructed release URL
+              const releaseUrl = `https://github.com/${theme.githubRepo}/releases/download/v${theme.latestVersion}/${theme.id}-${theme.latestVersion}.zip`;
+              const releaseExists = await checkUrl(releaseUrl);
+              if (!releaseExists) {
+                warnings.push(`Theme "${theme.id}": Release URL may not be accessible: ${releaseUrl}`);
               }
             }
 
