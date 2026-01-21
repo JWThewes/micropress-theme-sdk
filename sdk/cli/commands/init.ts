@@ -7,6 +7,9 @@ interface InitOptions {
   git: boolean;
 }
 
+// Version injected at build time from package.json
+const SDK_VERSION = process.env.PKG_VERSION || '0.1.0';
+
 const MANIFEST_TEMPLATE = `{
   "id": "{{name}}",
   "name": "{{displayName}}",
@@ -192,7 +195,7 @@ const PACKAGE_JSON_TEMPLATE = `{
     "package": "micropress-theme package"
   },
   "devDependencies": {
-    "@micropress/theme-sdk": "^1.0.0",
+    "@micropress/theme-sdk": "^{{sdkVersion}}",
     "typescript": "^5.0.0"
   },
   "keywords": ["micropress", "theme"],
@@ -221,6 +224,43 @@ const GITIGNORE_TEMPLATE = `node_modules/
 dist/
 *.zip
 .DS_Store
+`;
+
+const GITHUB_WORKFLOW_TEMPLATE = `name: Build Theme
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate theme
+        run: npm run validate
+
+      - name: Build theme
+        run: npm run build
+
+      - name: Package theme
+        run: npm run package
+
+      - name: Upload theme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: theme-package
+          path: "*.zip"
 `;
 
 function toDisplayName(name: string): string {
@@ -255,6 +295,7 @@ export async function initCommand(name: string, options: InitOptions): Promise<v
   const vars = {
     name,
     displayName: toDisplayName(name),
+    sdkVersion: SDK_VERSION,
   };
 
   // Write files
@@ -265,6 +306,7 @@ export async function initCommand(name: string, options: InitOptions): Promise<v
     { path: 'package.json', content: replaceTemplateVars(PACKAGE_JSON_TEMPLATE, vars) },
     { path: 'tsconfig.json', content: TSCONFIG_TEMPLATE },
     { path: '.gitignore', content: GITIGNORE_TEMPLATE },
+    { path: '.github/workflows/build.yml', content: GITHUB_WORKFLOW_TEMPLATE },
   ];
 
   for (const file of files) {
